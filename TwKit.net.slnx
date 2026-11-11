@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TwKit.net.cli.resolver\TwKit.net.cli.resolver.csproj" />
+  <Project Path="TwKit.net.playground/TwKit.net.playground.csproj" />
+</Solution>
