@@ -1,8 +1,9 @@
 using System.Runtime.InteropServices;
+
 using TwKit.net.cli.resolver.Enums;
 using TwKit.net.cli.resolver.Models;
 
-namespace TwKit.net.cli.resolver;
+namespace TwKit.net.cli.resolver.Services;
 
 public static class OsUtils
 {

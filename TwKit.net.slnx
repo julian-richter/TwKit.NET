@@ -1,4 +1,14 @@
 <Solution>
-  <Project Path="TwKit.net.cli.resolver\TwKit.net.cli.resolver.csproj" />
-  <Project Path="TwKit.net.playground/TwKit.net.playground.csproj" />
+  <Folder Name="/examples/">
+    <Project Path="TwKit.net.blazor.example.web/TwKit.net.blazor.example.web.csproj" />
+    <Project Path="TwKit.net.blazor.example.web.Client/TwKit.net.blazor.example.web.Client.csproj" />
+    <Project Path="TwKit.net.blazor.example.wasm/TwKit.net.blazor.example.wasm.csproj" />
+    <Project Path="TwKit.net.playground/TwKit.net.playground.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="TwKit.net.blazor/TwKit.net.blazor.csproj" />
+    <Project Path="TwKit.net.cli.resolver/TwKit.net.cli.resolver.csproj" />
+    <Project Path="TwKit.net.cli.runner/TwKit.net.cli.runner.csproj" />
+    <Project Path="TwKit.net/TwKit.net.csproj" />
+  </Folder>
 </Solution>

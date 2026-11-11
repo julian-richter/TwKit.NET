@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net11.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>TwKit.net</RootNamespace>
+        <PackageId>TwKit.net</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>TwKit</Authors>
+        <Description>Downloads and runs the Tailwind CSS CLI before Blazor WebAssembly compilation.</Description>
+        <DevelopmentDependency>true</DevelopmentDependency>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+        <IsPackable>true</IsPackable>
+        <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\TwKit.net.cli.resolver\TwKit.net.cli.resolver.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\TwKit.net.cli.runner\TwKit.net.cli.runner.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\TwKit.net.blazor\TwKit.net.blazor.csproj" PrivateAssets="all" />
+    </ItemGroup>
+
+    <Target Name="AddTwKitTaskAssemblies" BeforeTargets="_GetPackageFiles">
+        <PropertyGroup>
+            <_TwKitBlazorOutput>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../TwKit.net.blazor/bin/$(Configuration)/net11.0/'))</_TwKitBlazorOutput>
+        </PropertyGroup>
+        <ItemGroup>
+            <None Include="$(_TwKitBlazorOutput)TwKit.net.blazor.dll" Pack="true" PackagePath="tasks/net11.0/" Visible="false" />
+            <None Include="$(_TwKitBlazorOutput)TwKit.net.cli.runner.dll" Pack="true" PackagePath="tasks/net11.0/" Visible="false" />
+            <None Include="$(_TwKitBlazorOutput)TwKit.net.cli.resolver.dll" Pack="true" PackagePath="tasks/net11.0/" Visible="false" />
+            <None Include="$(MSBuildThisFileDirectory)../TwKit.net.blazor/build/TwKit.net.targets" Pack="true" PackagePath="build/TwKit.net.targets" Visible="false" />
+        </ItemGroup>
+    </Target>
+
+</Project>
