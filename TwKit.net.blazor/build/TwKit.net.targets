@@ -1,0 +1,64 @@
+<Project>
+
+    <PropertyGroup>
+        <TwKitEnableTailwind Condition="'$(TwKitEnableTailwind)' == ''">true</TwKitEnableTailwind>
+        <TwKitTailwindVersion Condition="'$(TwKitTailwindVersion)' == ''">v4.3.4</TwKitTailwindVersion>
+        <TwKitIntegrityCheck Condition="'$(TwKitIntegrityCheck)' == ''">false</TwKitIntegrityCheck>
+        <TwKitMinify Condition="'$(TwKitMinify)' == ''">true</TwKitMinify>
+        <TwKitTailwindInput Condition="'$(TwKitTailwindInput)' == ''">Styles/app.css</TwKitTailwindInput>
+        <TwKitTailwindOutput Condition="'$(TwKitTailwindOutput)' == ''">wwwroot/twkit.css</TwKitTailwindOutput>
+        <TwKitTailwindSources Condition="'$(TwKitTailwindSources)' == ''"></TwKitTailwindSources>
+        <TwKitTaskAssembly Condition="'$(TwKitTaskAssembly)' == '' AND Exists('$(MSBuildThisFileDirectory)..\tasks\net11.0\TwKit.net.blazor.dll')">$(MSBuildThisFileDirectory)..\tasks\net11.0\TwKit.net.blazor.dll</TwKitTaskAssembly>
+        <TwKitTaskAssembly Condition="'$(TwKitTaskAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\net11.0\TwKit.net.blazor.dll</TwKitTaskAssembly>
+    </PropertyGroup>
+
+    <UsingTask TaskName="TwKit.net.blazor.Tasks.TailwindBuildTask" AssemblyFile="$(TwKitTaskAssembly)" />
+
+    <ItemGroup Condition="'$(TwKitEnableTailwind)' == 'true' AND '$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true'">
+        <_TwKitTailwindWatch Include="$(MSBuildProjectDirectory)/**/*.razor"
+                             Exclude="$(MSBuildProjectDirectory)/bin/**;$(MSBuildProjectDirectory)/obj/**" />
+        <_TwKitTailwindWatch Include="$(MSBuildProjectDirectory)/**/*.cshtml"
+                             Exclude="$(MSBuildProjectDirectory)/bin/**;$(MSBuildProjectDirectory)/obj/**" />
+        <_TwKitTailwindWatch Include="$(MSBuildProjectDirectory)/**/*.html"
+                             Exclude="$(MSBuildProjectDirectory)/bin/**;$(MSBuildProjectDirectory)/obj/**" />
+        <_TwKitTailwindWatch Include="$(MSBuildProjectDirectory)/$(TwKitTailwindInput)" />
+        <_TwKitTailwindWatch Include="$(TwKitTailwindSources)/**/*.razor"
+                             Condition="'$(TwKitTailwindSources)' != ''"
+                             Exclude="$(TwKitTailwindSources)/bin/**;$(TwKitTailwindSources)/obj/**" />
+        <_TwKitTailwindWatch Include="$(TwKitTailwindSources)/**/*.cshtml"
+                             Condition="'$(TwKitTailwindSources)' != ''"
+                             Exclude="$(TwKitTailwindSources)/bin/**;$(TwKitTailwindSources)/obj/**" />
+        <_TwKitTailwindWatch Include="$(TwKitTailwindSources)/**/*.html"
+                             Condition="'$(TwKitTailwindSources)' != ''"
+                             Exclude="$(TwKitTailwindSources)/bin/**;$(TwKitTailwindSources)/obj/**" />
+    </ItemGroup>
+
+    <Target Name="TwKitTailwind"
+            Condition="'$(TwKitEnableTailwind)' == 'true' AND '$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true' AND '$(DesignTimeBuild)' != 'true'"
+            Inputs="@(_TwKitTailwindWatch)"
+            Outputs="$(TwKitTailwindOutput)">
+        <TailwindBuildTask
+            Version="$(TwKitTailwindVersion)"
+            IntegrityCheck="$(TwKitIntegrityCheck)"
+            Minify="$(TwKitMinify)"
+            InputCss="$(TwKitTailwindInput)"
+            OutputCss="$(TwKitTailwindOutput)"
+            WorkingDirectory="$(MSBuildProjectDirectory)" />
+    </Target>
+
+    <Target Name="TwKitIncludeTailwindOutput"
+            BeforeTargets="ResolveProjectStaticWebAssets"
+            DependsOnTargets="TwKitTailwind"
+            Condition="'$(TwKitEnableTailwind)' == 'true' AND '$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true'">
+        <PropertyGroup>
+            <_TwKitTailwindOutputFullPath>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), $(TwKitTailwindOutput)))</_TwKitTailwindOutputFullPath>
+        </PropertyGroup>
+        <ItemGroup>
+            <Content Include="$(TwKitTailwindOutput)" Condition="Exists('$(_TwKitTailwindOutputFullPath)')">
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+            </Content>
+        </ItemGroup>
+    </Target>
+
+</Project>
