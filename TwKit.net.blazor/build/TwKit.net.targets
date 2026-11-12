@@ -8,6 +8,9 @@
         <TwKitTailwindInput Condition="'$(TwKitTailwindInput)' == ''">Styles/app.css</TwKitTailwindInput>
         <TwKitTailwindOutput Condition="'$(TwKitTailwindOutput)' == ''">wwwroot/twkit.css</TwKitTailwindOutput>
         <TwKitTailwindSources Condition="'$(TwKitTailwindSources)' == ''"></TwKitTailwindSources>
+        <_TwKitProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)'))</_TwKitProjectDirectory>
+        <_TwKitTailwindInputFullPath>$([System.IO.Path]::GetFullPath('$(_TwKitProjectDirectory)/$(TwKitTailwindInput)'))</_TwKitTailwindInputFullPath>
+        <_TwKitTailwindOutputFullPath>$([System.IO.Path]::GetFullPath('$(_TwKitProjectDirectory)/$(TwKitTailwindOutput)'))</_TwKitTailwindOutputFullPath>
         <TwKitTaskAssembly Condition="'$(TwKitTaskAssembly)' == '' AND Exists('$(MSBuildThisFileDirectory)..\tasks\net11.0\TwKit.net.blazor.dll')">$(MSBuildThisFileDirectory)..\tasks\net11.0\TwKit.net.blazor.dll</TwKitTaskAssembly>
         <TwKitTaskAssembly Condition="'$(TwKitTaskAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\net11.0\TwKit.net.blazor.dll</TwKitTaskAssembly>
     </PropertyGroup>
@@ -36,13 +39,15 @@
     <Target Name="TwKitTailwind"
             Condition="'$(TwKitEnableTailwind)' == 'true' AND '$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true' AND '$(DesignTimeBuild)' != 'true'"
             Inputs="@(_TwKitTailwindWatch)"
-            Outputs="$(TwKitTailwindOutput)">
+            Outputs="$(_TwKitTailwindOutputFullPath)">
+        <Error Condition="!Exists('$(TwKitTaskAssembly)')"
+               Text="TwKit could not find the build task at '$(TwKitTaskAssembly)'." />
         <TailwindBuildTask
             Version="$(TwKitTailwindVersion)"
             IntegrityCheck="$(TwKitIntegrityCheck)"
             Minify="$(TwKitMinify)"
-            InputCss="$(TwKitTailwindInput)"
-            OutputCss="$(TwKitTailwindOutput)"
+            InputCss="$(_TwKitTailwindInputFullPath)"
+            OutputCss="$(_TwKitTailwindOutputFullPath)"
             WorkingDirectory="$(MSBuildProjectDirectory)" />
     </Target>
 
@@ -50,9 +55,6 @@
             BeforeTargets="ResolveProjectStaticWebAssets"
             DependsOnTargets="TwKitTailwind"
             Condition="'$(TwKitEnableTailwind)' == 'true' AND '$(UsingMicrosoftNETSdkBlazorWebAssembly)' == 'true'">
-        <PropertyGroup>
-            <_TwKitTailwindOutputFullPath>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), $(TwKitTailwindOutput)))</_TwKitTailwindOutputFullPath>
-        </PropertyGroup>
         <ItemGroup>
             <Content Include="$(TwKitTailwindOutput)" Condition="Exists('$(_TwKitTailwindOutputFullPath)')">
                 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -1,6 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-
 using TwKit.net.cli.resolver.Downloads;
 using TwKit.net.cli.resolver.GitHub;
 using TwKit.net.cli.resolver.Interfaces;
@@ -10,6 +7,8 @@ namespace TwKit.net.cli.resolver.Services;
 
 public static class TailwindCli
 {
+    public const long MinimumExecutableBytes = 1_048_576;
+
     private const string ReleasesUrl =
         "https://github.com/tailwindlabs/tailwindcss/releases";
     
@@ -98,6 +97,18 @@ public static class TailwindCli
             () => DownloadUnderLock(resolved, destinationPath, download, cancellationToken),
             cancellationToken);
     }
+
+    public static bool IsReady(string path)
+    {
+        try
+        {
+            return File.Exists(path) && new FileInfo(path).Length >= MinimumExecutableBytes;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
     
     private static void DownloadUnderLock(
         ResolvedTailwindCli resolved,
@@ -105,37 +116,48 @@ public static class TailwindCli
         ICliDownload        download,
         CancellationToken   cancellationToken)
     {
-        using Mutex mutex = new(false, MutexName(destinationPath));
-        bool owned = false;
+        using FileStream lockStream = AcquireLock(destinationPath + ".lock", cancellationToken);
         
-        try
+        if (IsReady(destinationPath))
         {
+            download.GrantExecutePermission(destinationPath);
+            return;
+        }
+        
+        if (File.Exists(destinationPath))
+            File.Delete(destinationPath);
+        
+        SaveDownloadAsync(resolved, destinationPath, download, cancellationToken)
+            .GetAwaiter()
+            .GetResult();
+    }
+    
+    private static FileStream AcquireLock(string lockPath, CancellationToken cancellationToken)
+    {
+        long started = Environment.TickCount64;
+        const long timeoutMilliseconds = 15 * 60 * 1000;
+        
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             try
             {
-                owned = mutex.WaitOne(TimeSpan.FromMinutes(15));
+                return new FileStream(
+                    lockPath,
+                    FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite,
+                    FileShare.None);
             }
-            catch (AbandonedMutexException)
+            catch (IOException) when (Environment.TickCount64 - started < timeoutMilliseconds)
             {
-                owned = true;
+                Thread.Sleep(200);
             }
-            
-            if (!owned)
-                throw new TimeoutException("Timed out waiting for the Tailwind CSS CLI download.");
-            
-            if (File.Exists(destinationPath))
+            catch (IOException)
             {
-                download.GrantExecutePermission(destinationPath);
-                return;
+                throw new TimeoutException(
+                    "Timed out waiting for the Tailwind CSS CLI download.");
             }
-            
-            SaveDownloadAsync(resolved, destinationPath, download, cancellationToken)
-                .GetAwaiter()
-                .GetResult();
-        }
-        finally
-        {
-            if (owned)
-                mutex.ReleaseMutex();
         }
     }
     
@@ -145,7 +167,7 @@ public static class TailwindCli
         ICliDownload        download,
         CancellationToken   cancellationToken)
     {
-        string temporaryPath = destinationPath + ".download";
+        string temporaryPath = $"{destinationPath}.{Guid.NewGuid():N}.partial";
         
         Console.WriteLine($"Downloading {resolved.DownloadUrl}");
         
@@ -157,6 +179,10 @@ public static class TailwindCli
                 cancellationToken);
             
             Console.WriteLine("Downloaded.");
+
+            if (!IsReady(temporaryPath))
+                throw new InvalidDataException(
+                    "The downloaded Tailwind CSS CLI is incomplete.");
             
             if (resolved.Sha256 is not null)
                 await Checksum.VerifyAsync(
@@ -175,12 +201,6 @@ public static class TailwindCli
             
             throw;
         }
-    }
-    
-    private static string MutexName(string destinationPath)
-    {
-        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(destinationPath)));
-        return "TwKitTailwind" + Convert.ToHexString(hash);
     }
     
     private static string NormalizeDestinationPath(string destinationPath, ICliDownload download)
