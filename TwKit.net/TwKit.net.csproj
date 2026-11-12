@@ -9,6 +9,7 @@
         <Version>1.0.0</Version>
         <Authors>TwKit</Authors>
         <Description>Downloads and runs the Tailwind CSS CLI before Blazor WebAssembly compilation.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <DevelopmentDependency>true</DevelopmentDependency>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
@@ -31,6 +32,7 @@
             <None Include="$(_TwKitBlazorOutput)TwKit.net.cli.runner.dll" Pack="true" PackagePath="tasks/net11.0/" Visible="false" />
             <None Include="$(_TwKitBlazorOutput)TwKit.net.cli.resolver.dll" Pack="true" PackagePath="tasks/net11.0/" Visible="false" />
             <None Include="$(MSBuildThisFileDirectory)../TwKit.net.blazor/build/TwKit.net.targets" Pack="true" PackagePath="build/TwKit.net.targets" Visible="false" />
+            <None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="\" />
         </ItemGroup>
     </Target>
 
